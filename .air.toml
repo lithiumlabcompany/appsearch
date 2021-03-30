@@ -1,0 +1,3 @@
+[build]
+cmd = "go build ./..."
+full_bin = "go test -v -run=. ./... && echo 'OK'"
