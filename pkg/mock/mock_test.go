@@ -16,10 +16,6 @@ func TestMock(t *testing.T) {
 		_ = c
 	})
 
-	t.Run("Not so dirty implementation", func(t *testing.T) {
-
-	})
-
 	t.Run("Dirty implementation hacks", func(t *testing.T) {
 		mockRequest := appsearch.CreateEngineRequest{
 			Name:     "testEngine",

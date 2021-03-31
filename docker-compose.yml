@@ -1,0 +1,18 @@
+version: "3"
+services:
+  app:
+    init: true
+    command: go test -failfast -v ./...
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - APPSEARCH
+    networks:
+      - app-tier
+    volumes:
+      - .:/app
+
+networks:
+  app-tier:
+    driver: bridge
