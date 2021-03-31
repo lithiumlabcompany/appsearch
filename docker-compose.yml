@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - APPSEARCH
     networks:
       - app-tier
     volumes:
