@@ -31,20 +31,6 @@ type DeleteResponse struct {
 	Errors []string `json:"errors"`
 }
 
-// Schema type defines 4 types of value: text (""), date (time.RFC3339), number (0) and geolocation ("0.0,0.0")
-type SchemaType = string
-
-const (
-	SchemaTypeText        = "text"
-	SchemaTypeDate        = "date"
-	SchemaTypeNumber      = "number"
-	SchemaTypeGeolocation = "geolocation"
-)
-
-// Schema definition as map[string]SchemaType
-// "id" field of "text" type is added to schema automatically (non-standard behaviour).
-type SchemaDefinition map[string]SchemaType
-
 // Pagination metadata included in paged responses
 type PaginationMeta struct {
 	PageSize     int `json:"size"`

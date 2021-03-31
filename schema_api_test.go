@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	schema2 "github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 func TestSchemaAPI(t *testing.T) {
@@ -31,7 +33,7 @@ func TestSchemaAPI(t *testing.T) {
 		engine := createRandomEngine(c)
 		defer deleteEngine(c, engine)
 
-		schema := SchemaDefinition{
+		schema := schema2.Definition{
 			"id":  "text",
 			"foo": "text",
 		}

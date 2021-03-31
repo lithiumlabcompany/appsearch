@@ -1,23 +1,24 @@
-package appsearch
+package schema
 
 import (
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/lithiumlabcompany/appsearch/internal/pkg/flatten"
 )
 
-// Normalize nested map into flat map as defined in schema
+// Normalize nested map into flat map as defined in schema.
 // Keys are stripped of trailing underscores, lowercased and flattened with underscore (_) separator
-func Normalize(raw m, schema SchemaDefinition) (normalizedFlatMap m, err error) {
+func Normalize(raw Map, schema Definition) (normalizedFlatMap Map, err error) {
 	flatMap, err := flatten.Flatten(raw, flatten.UnderscoreStyle)
 	if err != nil {
 		return
 	}
 
-	normalizedFlatMap = make(m)
+	normalizedFlatMap = make(Map)
 	for rawKey, flatValue := range flatMap {
-		normKey := strings.ToLower(strings.Trim(rawKey, "_"))
+		normKey := NormalizeField(rawKey)
 		baseKey := strings.Split(normKey, "_")[0]
 
 		// Normalize to key (store value as is)
@@ -63,13 +64,27 @@ func Normalize(raw m, schema SchemaDefinition) (normalizedFlatMap m, err error) 
 	return normalizedFlatMap, nil
 }
 
-var defaultValues = map[SchemaType]interface{}{
+var underscoreRe = regexp.MustCompile(`_+`)
+
+// Get normalized variant for field name
+func NormalizeField(field string) (normalized string) {
+	normalized = field
+	// Replace any sequence of underscores by a single underscore
+	normalized = underscoreRe.ReplaceAllString(normalized, "_")
+	// Trim underscores
+	normalized = strings.Trim(normalized, "_")
+	// Lowercase
+	normalized = strings.ToLower(normalized)
+	return
+}
+
+var defaultValues = map[Type]interface{}{
 	"text":        "",
 	"date":        time.Time{},
 	"number":      0,
 	"geolocation": "0.0,0.0",
 }
 
-func nullifyType(schemaType SchemaType) interface{} {
+func nullifyType(schemaType Type) interface{} {
 	return defaultValues[schemaType]
 }

@@ -2,6 +2,8 @@ package appsearch
 
 import (
 	"context"
+
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 type DocumentAPI interface {
@@ -37,16 +39,16 @@ type EngineAPI interface {
 
 	// Create engine if doesn't exist.
 	// Optionally update a schema even if engine exists.
-	EnsureEngine(ctx context.Context, request CreateEngineRequest, schema ...SchemaDefinition) (err error)
+	EnsureEngine(ctx context.Context, request CreateEngineRequest, schema ...schema.Definition) (err error)
 }
 
 type SchemaAPI interface {
 	// List a schema definition by engineName
-	ListSchema(ctx context.Context, engineName string) (data SchemaDefinition, err error)
+	ListSchema(ctx context.Context, engineName string) (data schema.Definition, err error)
 
 	// Update schema by engineName (create or change fields).
 	// Fields cannot be deleted.
-	UpdateSchema(ctx context.Context, engineName string, def SchemaDefinition) (err error)
+	UpdateSchema(ctx context.Context, engineName string, def schema.Definition) (err error)
 }
 
 // APIClient interface

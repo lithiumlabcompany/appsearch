@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/lithiumlabcompany/appsearch"
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 type mock struct {
 	Engines map[string]appsearch.EngineDescription
-	Schemas map[string]appsearch.SchemaDefinition
+	Schemas map[string]schema.Definition
 
 	Implementation map[string]interface{}
 }
@@ -20,14 +21,14 @@ type mock struct {
 func Mock(args ...interface{}) *mock {
 	m := &mock{
 		Engines:        map[string]appsearch.EngineDescription{},
-		Schemas:        map[string]appsearch.SchemaDefinition{},
+		Schemas:        map[string]schema.Definition{},
 		Implementation: map[string]interface{}{},
 	}
 	for _, v := range args {
 		switch v := v.(type) {
 		case map[string]appsearch.EngineDescription:
 			m.Engines = v
-		case map[string]appsearch.SchemaDefinition:
+		case map[string]schema.Definition:
 			m.Schemas = v
 		case map[string]interface{}:
 			m.Implementation = v

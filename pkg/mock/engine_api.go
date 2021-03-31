@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/lithiumlabcompany/appsearch"
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 func (m *mock) ListEngine(ctx context.Context, engineName string) (data appsearch.EngineDescription, err error) {
@@ -49,7 +50,7 @@ func (m *mock) DeleteEngine(ctx context.Context, engineName string) (err error) 
 	return nil
 }
 
-func (m *mock) EnsureEngine(ctx context.Context, request appsearch.CreateEngineRequest, schema ...appsearch.SchemaDefinition) (err error) {
+func (m *mock) EnsureEngine(ctx context.Context, request appsearch.CreateEngineRequest, schema ...schema.Definition) (err error) {
 	_, err = m.ListEngine(ctx, request.Name)
 
 	if errors.Is(err, appsearch.ErrEngineDoesntExist) {

@@ -1,4 +1,4 @@
-package appsearch
+package schema
 
 import (
 	"sort"
@@ -20,7 +20,7 @@ func TestNormalize(t *testing.T) {
 				"_somethingIgnored":  3,
 				"justIgnored":        4,
 				"_somethingIncluded": 5,
-			}, SchemaDefinition{
+			}, Definition{
 				"id":                "text",
 				"thisstuff":         "text",
 				"otherstuff":        "text",
@@ -46,7 +46,7 @@ func TestNormalize(t *testing.T) {
 				"foo_ignored": 2,
 				"barIgnored":  3,
 				"nowhere":     4,
-			}, SchemaDefinition{
+			}, Definition{
 				"something_quitenested_what": "text",
 				"not_here":                   "text",
 				"nowhere":                    "text",
@@ -73,7 +73,7 @@ func TestNormalize(t *testing.T) {
 				},
 				"c": 3,
 				"d": 4,
-			}, SchemaDefinition{
+			}, Definition{
 				"imhere":         "text",
 				"hellolocalized": "text",
 			})
@@ -98,7 +98,7 @@ func TestNormalize(t *testing.T) {
 				"numeric":        nil,
 				"timestamp":      nil,
 				"textualPresent": "hello",
-			}, SchemaDefinition{
+			}, Definition{
 				"textual":           "text",
 				"numeric":           "number",
 				"timestamp":         "date",
