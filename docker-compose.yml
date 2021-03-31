@@ -1,0 +1,61 @@
+version: "3"
+services:
+  elasticsearch:
+    hostname: elasticsearch
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:7.6.2'
+    networks:
+      - app-tier
+    environment:
+      - "node.name=es-node"
+      - "discovery.type=single-node"
+      - "cluster.name=app-search-docker-cluster"
+      - "bootstrap.memory_lock=true"
+      - "ES_JAVA_OPTS=-Xms512m -Xmx2048m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: [ "CMD", "curl", "-fsSL", "http://127.0.0.1:9200/_cat/health?h=status" ]
+      interval: 30s
+      timeout: 20s
+      retries: 4
+
+  appsearch:
+    hostname: appsearch
+    image: 'docker.elastic.co/app-search/app-search:7.6.2'
+    restart: on-failure
+    networks:
+      - app-tier
+    environment:
+      - "elasticsearch.host=http://elasticsearch:9200"
+      - "allow_es_settings_modification=true"
+      - "elasticsearch.password=password"
+      - "JAVA_OPTS=-Xmx2048m"
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: [ "CMD", "curl", "-fsSL", "http://127.0.0.1:3002/welcome" ]
+      interval: 30s
+      timeout: 40s
+      retries: 10
+
+  app:
+    init: true
+    command: go test -failfast -v ./...
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      app-tier:
+    environment:
+      APPSEARCH: http://elastic:password@appsearch:3002
+    depends_on:
+      appsearch:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+networks:
+  app-tier:
+    driver: bridge
