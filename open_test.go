@@ -20,7 +20,7 @@ func TestOpen(t *testing.T) {
 			host, token, authType, err := resolve("https://uname:pass@host")
 			require.NoError(t, err)
 			require.Equal(t, "https://host/api/as/v1/", host)
-			require.Equal(t, "token", token)
+			require.Equal(t, "dW5hbWU6cGFzcw==", token)
 			require.Equal(t, "Basic", authType)
 		})
 
