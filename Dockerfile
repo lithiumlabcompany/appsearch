@@ -1,6 +1,6 @@
 FROM golang:1.14-alpine
 
-ENV CGO_ENABLED=false
+ENV CGO_ENABLED=0
 
 WORKDIR /app
 
