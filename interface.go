@@ -6,6 +6,7 @@ import (
 	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
+// DocumentAPI document api
 type DocumentAPI interface {
 	// Patch a list of documents. Every document must contain "id".
 	// Every document is processed separately.
@@ -24,6 +25,7 @@ type DocumentAPI interface {
 	SearchDocuments(ctx context.Context, engineName string, query Query) (response SearchResponse, err error)
 }
 
+// EngineAPI engine api
 type EngineAPI interface {
 	// List an engine by name
 	ListEngine(ctx context.Context, engineName string) (data EngineDescription, err error)
@@ -42,6 +44,7 @@ type EngineAPI interface {
 	EnsureEngine(ctx context.Context, request CreateEngineRequest, schema ...schema.Definition) (err error)
 }
 
+// SchemaAPI schema api
 type SchemaAPI interface {
 	// List a schema definition by engineName
 	ListSchema(ctx context.Context, engineName string) (data schema.Definition, err error)

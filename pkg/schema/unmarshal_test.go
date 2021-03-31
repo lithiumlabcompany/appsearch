@@ -51,4 +51,81 @@ func TestUnmarshal(t *testing.T) {
 			},
 		}, output)
 	})
+
+	t.Run("UnmarshalResults", func(t *testing.T) {
+		type model struct {
+			Foo string `json:"__foo"`
+			Bar struct {
+				Baz string `json:"__stUff__"`
+			} `json:"dEEp_"`
+		}
+		results := []Map{
+			{
+				"foo":        "1",
+				"deep_stuff": "2",
+			},
+			{
+				"foo":        "3",
+				"deep_stuff": "4",
+			},
+			{
+				"deep_stuff": Map{
+					"raw": "value",
+				},
+				"foo": Map{
+					"raw": "value",
+				},
+			},
+		}
+		expected := []model{
+			{
+				Foo: "1",
+				Bar: struct {
+					Baz string `json:"__stUff__"`
+				}{
+					Baz: "2",
+				},
+			},
+			{
+				Foo: "3",
+				Bar: struct {
+					Baz string `json:"__stUff__"`
+				}{
+					Baz: "4",
+				},
+			},
+			{
+				Foo: "value",
+				Bar: struct {
+					Baz string `json:"__stUff__"`
+				}{
+					Baz: "value",
+				},
+			},
+		}
+		t.Run("As []model", func(t *testing.T) {
+			var output []model
+			err := UnmarshalResults(results, &output)
+			require.NoError(t, err)
+			require.EqualValues(t, expected, output)
+		})
+		// t.Run("As *[]model", func(t *testing.T) {
+		// 	var output *[]model
+		// 	err := UnmarshalResults(results, &output)
+		// 	require.NoError(t, err)
+		// 	require.EqualValues(t, expected, output)
+		// })
+		// t.Run("As []*model", func(t *testing.T) {
+		// 	var output []*model
+		// 	err := UnmarshalResults(results, &output)
+		// 	require.NoError(t, err)
+		// 	require.EqualValues(t, expected, output)
+		// })
+		// t.Run("As *[]*model", func(t *testing.T) {
+		// 	var output *[]*model
+		// 	err := UnmarshalResults(results, &output)
+		// 	require.NoError(t, err)
+		// require.EqualValues(t, expected, output)
+		// })
+	})
 }

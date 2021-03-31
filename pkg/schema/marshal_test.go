@@ -41,7 +41,8 @@ func TestMarshal(t *testing.T) {
 		require.NoError(t, err)
 
 		var out Map
-		json.Unmarshal(b, &out)
+		err = json.Unmarshal(b, &out)
+		require.NoError(t, err)
 
 		require.EqualValues(t, Map{
 			"baz_doo":                  123.0,

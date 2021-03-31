@@ -14,7 +14,7 @@ func (c *client) ListAllEngines(ctx context.Context) (engines []EngineDescriptio
 	totalPages := 1
 
 	for page < totalPages {
-		page += 1
+		page++
 
 		res, err := c.ListEngines(ctx, Page{page, 25})
 		if err != nil {

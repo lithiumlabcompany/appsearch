@@ -4,7 +4,6 @@ package flatten
 
 import (
 	"errors"
-	"regexp"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -58,8 +57,6 @@ func Flatten(nested map[string]interface{}, style SeparatorStyle) (map[string]in
 // JSON nested input must be a map
 var NotValidJsonInputError = errors.New("Not a valid input, must be a map")
 
-var isJsonMap = regexp.MustCompile(`^\s*\{`)
-
 func flatten(top bool, flatMap map[string]interface{}, nested interface{}, prefix string, style SeparatorStyle) error {
 	assign := func(newKey string, v interface{}) error {
 		switch v.(type) {
@@ -78,16 +75,22 @@ func flatten(top bool, flatMap map[string]interface{}, nested interface{}, prefi
 		return nil
 	}
 
-	switch nested.(type) {
+	switch nested := nested.(type) {
 	case map[string]interface{}:
-		for k, v := range nested.(map[string]interface{}) {
+		for k, v := range nested {
 			newKey := enkey(top, prefix, k, style)
-			assign(newKey, v)
+			err := assign(newKey, v)
+			if err != nil {
+				return err
+			}
 		}
 	case primitive.M:
-		for k, v := range nested.(primitive.M) {
+		for k, v := range nested {
 			newKey := enkey(top, prefix, k, style)
-			assign(newKey, v)
+			err := assign(newKey, v)
+			if err != nil {
+				return err
+			}
 		}
 	default:
 		return NotValidInputError

@@ -75,22 +75,6 @@ func callValues(method reflect.Type, interfaces []interface{}) []reflect.Value {
 	return values
 }
 
-func sliceAsInterfaces(slice interface{}) []interface{} {
-	switch reflect.TypeOf(slice).Kind() {
-	case reflect.Slice:
-		s := reflect.ValueOf(slice)
-		interfaces := make([]interface{}, s.Len())
-
-		for i := 0; i < s.Len(); i++ {
-			interfaces[i] = s.Index(i).Interface()
-		}
-
-		return interfaces
-	default:
-		panic(fmt.Errorf("value of %v is not reflect.Slice", slice))
-	}
-}
-
 func interfacesOf(arg ...interface{}) []interface{} {
 	return arg
 }

@@ -43,9 +43,7 @@ func Normalize(raw Map, schema Definition) (normalizedFlatMap Map, err error) {
 			// E.g. meanings.az.value:[1,2], meanings.ru.value:[3] -> meanings:[1,2,3]
 			switch values := flatValue.(type) {
 			case []string:
-				for _, item := range values {
-					stringSlice = append(stringSlice, item)
-				}
+				stringSlice = append(stringSlice, values...)
 			case []interface{}:
 				for _, item := range values {
 					if str, ok := item.(string); ok {
