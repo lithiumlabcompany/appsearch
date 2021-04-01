@@ -35,35 +35,43 @@ import (
 	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
+type Civilization struct {
+	Name        string
+	Rating      float32
+	Description string
+}
+
 func main() {
 	client, _ := appsearch.Open("https://private-key@endpoint.ent-search.cloud.es.io")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	engineName := "civilizations"
+	schemaDefinition := appsearch.SchemaDefinition{
+		"name":        "text",
+		"rating":      "number",
+		"description": "text",
+	}
 	// Engine will be created if it doesn't exist and schema will be updated
 	client.EnsureEngine(ctx, appsearch.CreateEngineRequest{
 		Name:     "civilizations",
 		Language: "en",
-	}, appsearch.SchemaDefinition{
-		"name":        "text",
-		"rating":      "number",
-		"description": "text",
-	})
+	}, schemaDefinition)
 
-	client.UpdateDocuments(ctx, "civilizations", []map[string]interface{}{
-		{"name": "Babylonian", "rating": 5212.2, "description": "Technological and scientific"},
-	})
+	document, _ := schema.ToMap(Civilization{
+		Name:        "Babylonian",
+		Rating:      5212.2,
+		Description: "Technological and scientific",
+	}, schemaDefinition)
 
-	search, _ := client.SearchDocuments(ctx, "civilizations", appsearch.Query{
-		Query: "science",
-	})
+	client.UpdateDocuments(ctx, "civilizations", []schema.Map{document})
 
-	type Civilization struct {
-		Name        string
-		Rating      float32
-		Description string
-	}
+	search, _ := client.SearchDocuments(ctx, engineName, appsearch.Query{
+		Query: "scientific",
+	})
 
 	var results []Civilization
-	schema.UnmarshalResults(search.Results, &results)
+	_ = schema.UnmarshalResults(search.Results, &results)
 
 	println(results[0])
 }
