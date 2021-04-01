@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -23,9 +24,13 @@ func Normalize(raw Map, schema Definition) (normalizedFlatMap Map, err error) {
 
 		// Normalize to key (store value as is)
 		if schemaType, inSchema := schema[normKey]; inSchema {
-			// Make sure nil values in schema are nullified
-			if flatValue == nil {
+			switch value := flatValue.(type) {
+			case nil:
+				// Make sure nil values in schema are nullified
 				flatValue = nullifyType(schemaType)
+			case bool:
+				// Serialize boolean to string or number
+				flatValue = encodeBool(value, schemaType)
 			}
 
 			normalizedFlatMap[normKey] = flatValue
@@ -60,6 +65,21 @@ func Normalize(raw Map, schema Definition) (normalizedFlatMap Map, err error) {
 	}
 
 	return normalizedFlatMap, nil
+}
+
+func encodeBool(value bool, schemaType Type) interface{} {
+	switch schemaType {
+	case TypeText:
+		return fmt.Sprintf("%v", value)
+	case TypeNumber:
+		if value {
+			return 1
+		} else {
+			return 0
+		}
+	default:
+		panic(fmt.Errorf("cannot encode %v to %v", value, schemaType))
+	}
 }
 
 var underscoreRe = regexp.MustCompile(`_+`)
