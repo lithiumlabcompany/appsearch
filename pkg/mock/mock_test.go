@@ -11,8 +11,7 @@ import (
 
 func TestMock(t *testing.T) {
 	t.Run("Must implement APIClient", func(t *testing.T) {
-		var c appsearch.APIClient
-		c = &mock{}
+		var c appsearch.APIClient = &mock{}
 		_ = c
 	})
 
@@ -38,7 +37,7 @@ func TestMock(t *testing.T) {
 			},
 		)
 
-		res, err := m.CreateEngine(nil, mockRequest)
+		res, err := m.CreateEngine(context.TODO(), mockRequest)
 		require.NoError(t, err)
 
 		require.EqualValues(t, mockResult, res)

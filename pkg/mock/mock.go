@@ -7,11 +7,12 @@ import (
 	"strings"
 
 	"github.com/lithiumlabcompany/appsearch"
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 type mock struct {
 	Engines map[string]appsearch.EngineDescription
-	Schemas map[string]appsearch.SchemaDefinition
+	Schemas map[string]schema.Definition
 
 	Implementation map[string]interface{}
 }
@@ -20,14 +21,14 @@ type mock struct {
 func Mock(args ...interface{}) *mock {
 	m := &mock{
 		Engines:        map[string]appsearch.EngineDescription{},
-		Schemas:        map[string]appsearch.SchemaDefinition{},
+		Schemas:        map[string]schema.Definition{},
 		Implementation: map[string]interface{}{},
 	}
 	for _, v := range args {
 		switch v := v.(type) {
 		case map[string]appsearch.EngineDescription:
 			m.Engines = v
-		case map[string]appsearch.SchemaDefinition:
+		case map[string]schema.Definition:
 			m.Schemas = v
 		case map[string]interface{}:
 			m.Implementation = v
@@ -72,22 +73,6 @@ func callValues(method reflect.Type, interfaces []interface{}) []reflect.Value {
 		}
 	}
 	return values
-}
-
-func sliceAsInterfaces(slice interface{}) []interface{} {
-	switch reflect.TypeOf(slice).Kind() {
-	case reflect.Slice:
-		s := reflect.ValueOf(slice)
-		interfaces := make([]interface{}, s.Len())
-
-		for i := 0; i < s.Len(); i++ {
-			interfaces[i] = s.Index(i).Interface()
-		}
-
-		return interfaces
-	default:
-		panic(fmt.Errorf("value of %v is not reflect.Slice", slice))
-	}
 }
 
 func interfacesOf(arg ...interface{}) []interface{} {

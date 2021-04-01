@@ -2,13 +2,14 @@ package appsearch
 
 import (
 	"context"
-	"fmt"
-	"math/rand"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 func createRandomEngine(c APIClient) EngineDescription {
 	engine, err := c.CreateEngine(context.TODO(), CreateEngineRequest{
-		Name: fmt.Sprintf("test-%d", rand.Uint64()),
+		Name: strings.ToLower(uuid.New().String()),
 	})
 	exit(err)
 	return engine

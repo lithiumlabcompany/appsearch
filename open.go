@@ -12,7 +12,7 @@ import (
 // First parameter may be specified as URL with API key in authentication like:
 // https://private-...@abcd.ent-search.eu-central-1.aws.cloud.es.io
 // Second parameter is always interpreted as API key if specified
-func Open(endpointAndKey ...string) (*client, error) {
+func Open(endpointAndKey ...string) (APIClient, error) {
 	hostURL, token, authType, err := getHostURL(endpointAndKey)
 
 	return &client{
@@ -23,10 +23,10 @@ func Open(endpointAndKey ...string) (*client, error) {
 	}, err
 }
 
-func getHostURL(params []string) (hostUrl string, token string, authType string, err error) {
+func getHostURL(params []string) (hostURL string, token string, authType string, err error) {
 	switch len(params) {
 	case 2:
-		hostUrl, _, _, err = resolve(params[0])
+		hostURL, _, _, err = resolve(params[0])
 		authType = "Bearer"
 		token = params[1]
 		return
@@ -37,8 +37,8 @@ func getHostURL(params []string) (hostUrl string, token string, authType string,
 	}
 }
 
-func resolve(rawUrl string) (hostUrl string, token string, authType string, err error) {
-	u, err := url.Parse(rawUrl)
+func resolve(rawURL string) (hostURL string, token string, authType string, err error) {
+	u, err := url.Parse(rawURL)
 	if err != nil {
 		return
 	}
@@ -56,6 +56,6 @@ func resolve(rawUrl string) (hostUrl string, token string, authType string, err 
 		}
 		u.User = nil
 	}
-	hostUrl = u.ResolveReference(&url.URL{Path: "/api/as/v1/"}).String()
+	hostURL = u.ResolveReference(&url.URL{Path: "/api/as/v1/"}).String()
 	return
 }

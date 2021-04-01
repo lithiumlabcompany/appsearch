@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type m = map[string]interface{}
+
 func TestDocumentAPI(t *testing.T) {
 	t.Parallel()
 	ctx := context.TODO()

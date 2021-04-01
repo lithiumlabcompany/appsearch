@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
+
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 // List all available engines
@@ -12,7 +14,7 @@ func (c *client) ListAllEngines(ctx context.Context) (engines []EngineDescriptio
 	totalPages := 1
 
 	for page < totalPages {
-		page += 1
+		page++
 
 		res, err := c.ListEngines(ctx, Page{page, 25})
 		if err != nil {
@@ -56,7 +58,7 @@ func (c *client) DeleteEngine(ctx context.Context, engineName string) (err error
 
 // Create engine if doesn't exist.
 // Optionally update a schema even if engine exists.
-func (c *client) EnsureEngine(ctx context.Context, request CreateEngineRequest, schema ...SchemaDefinition) (err error) {
+func (c *client) EnsureEngine(ctx context.Context, request CreateEngineRequest, schema ...schema.Definition) (err error) {
 	_, err = c.ListEngine(ctx, request.Name)
 
 	if errors.Is(err, ErrEngineDoesntExist) {

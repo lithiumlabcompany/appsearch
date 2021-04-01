@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	schema2 "github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 func TestEngineAPI(t *testing.T) {
@@ -80,7 +82,7 @@ func TestEngineAPI(t *testing.T) {
 		t.Run("Must update schema", func(t *testing.T) {
 			t.Parallel()
 			engineName := fmt.Sprintf("test-%d", rand.Uint64())
-			schema := SchemaDefinition{
+			schema := schema2.Definition{
 				"id":   "text",
 				"foo":  "text",
 				"bar":  "number",

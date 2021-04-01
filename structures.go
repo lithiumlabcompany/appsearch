@@ -3,17 +3,17 @@ package appsearch
 import (
 	"fmt"
 	"strings"
+
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
-type m = map[string]interface{}
-type stringMap = map[string]string
-
+// Page options
 type Page struct {
 	Page int `json:"current,omitempty"`
 	Size int `json:"size,omitempty"`
 }
 
-// Response for Patch or Update operations
+// UpdateResponse Response for Patch or Update operations
 type UpdateResponse struct {
 	// Updated document ID
 	ID string `json:"id"`
@@ -21,7 +21,7 @@ type UpdateResponse struct {
 	Errors []string `json:"errors"`
 }
 
-// Response for Patch or Update operations
+// DeleteResponse Response for Patch or Update operations
 type DeleteResponse struct {
 	// Deleted document ID
 	ID string `json:"id"`
@@ -31,21 +31,7 @@ type DeleteResponse struct {
 	Errors []string `json:"errors"`
 }
 
-// Schema type defines 4 types of value: text (""), date (time.RFC3339), number (0) and geolocation ("0.0,0.0")
-type SchemaType = string
-
-const (
-	SchemaTypeText        = "text"
-	SchemaTypeDate        = "date"
-	SchemaTypeNumber      = "number"
-	SchemaTypeGeolocation = "geolocation"
-)
-
-// Schema definition as map[string]SchemaType
-// "id" field of "text" type is added to schema automatically (non-standard behaviour).
-type SchemaDefinition map[string]SchemaType
-
-// Pagination metadata included in paged responses
+// PaginationMeta Pagination metadata included in paged responses
 type PaginationMeta struct {
 	PageSize     int `json:"size"`
 	TotalPages   int `json:"total_pages"`
@@ -53,7 +39,7 @@ type PaginationMeta struct {
 	TotalResults int `json:"total_results"`
 }
 
-// Response metadata included in some responses
+// ResponseMeta Response metadata included in some responses
 type ResponseMeta struct {
 	Page      PaginationMeta `json:"page"`
 	Alerts    []string       `json:"alerts"`
@@ -61,19 +47,19 @@ type ResponseMeta struct {
 	RequestID string         `json:"request_id"`
 }
 
-// ListEngines response
+// EngineResponse ListEngines response
 type EngineResponse struct {
 	Meta    ResponseMeta        `json:"meta"`
 	Results []EngineDescription `json:"results"`
 }
 
-// Request for CreateEngine
+// CreateEngineRequest Request for CreateEngine
 type CreateEngineRequest struct {
 	Name     string `json:"name"`
 	Language string `json:"language,omitempty"`
 }
 
-// Engine description
+// EngineDescription Engine description
 type EngineDescription struct {
 	Name          string  `json:"name"`
 	Type          string  `json:"type"`
@@ -81,30 +67,37 @@ type EngineDescription struct {
 	DocumentCount int     `json:"document_count"`
 }
 
-type Sorting = stringMap
+// Sorting options
+type Sorting = map[string]string
 
+// SearchGroup Search group
 type SearchGroup struct {
-	Field string  `json:"field"`
-	Size  int     `json:"size,omitempty"`
-	Sort  Sorting `json:"sort,omitempty"`
-	// TODO: IDK which type this field must have. Definition is unclear in spec.
-	Collapse interface{} `json:"collapse,omitempty"`
+	Field    string  `json:"field"`
+	Size     int     `json:"size,omitempty"`
+	Sort     Sorting `json:"sort,omitempty"`
+	Collapse bool    `json:"collapse,omitempty"`
 }
 
+// FacetType sFacet type
 type FacetType = string
 
 const (
+	// ValueFacet Facet type
 	ValueFacet FacetType = "value"
+	// RangeFacet Facet type
 	RangeFacet FacetType = "range"
 )
 
+// Range Search Range
 type Range struct {
 	From interface{} `json:"from"`
 	To   interface{} `json:"to"`
 }
 
-type SearchFilters = m
+// SearchFilters
+type SearchFilters = schema.Map
 
+// Facet
 type Facet struct {
 	Type   FacetType `json:"type"`
 	Name   string    `json:"name"`
@@ -113,31 +106,44 @@ type Facet struct {
 	Ranges []Range   `json:"ranges,omitempty"`
 }
 
+// SearchFacets Search facets
 type SearchFacets = map[string][]Facet
 
+// BoostType Boost type
 type BoostType = string
 
 const (
-	ValueBoost      BoostType = "value"
-	ProximityBoost  BoostType = "proximity"
+	// ValueBoost Boost type
+	ValueBoost BoostType = "value"
+	// ProximityBoost Boost type
+	ProximityBoost BoostType = "proximity"
+	// FunctionalBoost Boost type
 	FunctionalBoost BoostType = "functional"
 )
 
+// BoostOperation Boost operation
 type BoostOperation = string
 
 const (
-	AddOperation      BoostOperation = "add"
+	// AddOperation Boost operation
+	AddOperation BoostOperation = "add"
+	// MultiplyOperation Boost operation
 	MultiplyOperation BoostOperation = "multiply"
 )
 
+// BoostFunction Boost function
 type BoostFunction = string
 
 const (
-	LinearFunction      BoostFunction = "linear"
-	GaussianFunction    BoostFunction = "gaussian"
+	// Boost function
+	LinearFunction BoostFunction = "linear"
+	// Boost function
+	GaussianFunction BoostFunction = "gaussian"
+	// Boost function
 	ExponentialFunction BoostFunction = "exponential"
 )
 
+// Search boosts
 type SearchBoost struct {
 	Type   BoostType   `json:"type"`
 	Value  interface{} `json:"value,omitempty"`
@@ -150,32 +156,40 @@ type SearchBoost struct {
 	Center string `json:"center,omitempty"`
 }
 
+// Search boosts
 type SearchBoosts = map[string]SearchBoost
 
+// Search analytics
 type SearchAnalytics struct {
 	Tags []string `json:"tags"`
 }
 
+// Field with weight
 type FieldWithWeight struct {
 	Weight float32 `json:"weight"`
 }
 
+// Specify search felds
 type SearchFields = map[string]FieldWithWeight
 
+// Specify field as raw
 type RawField struct {
 	Size int `json:"size,omitempty"`
 }
 
+// Specify field as snippet
 type SnippetField struct {
 	Size     int  `json:"size,omitempty"`
 	Fallback bool `json:"fallback,omitempty"`
 }
 
+// Specify what field must look like in output
 type ResultField struct {
 	Raw     *RawField     `json:"raw,omitempty"`
 	Snippet *SnippetField `json:"snippet,omitempty"`
 }
 
+// Map of result field specifications
 type ResultFields = map[string]ResultField
 
 // Search query structure
@@ -206,7 +220,7 @@ type Query struct {
 // Document Search API response
 type SearchResponse struct {
 	Meta    ResponseMeta `json:"meta"`
-	Results []m          `json:"results"`
+	Results []schema.Map `json:"results"`
 }
 
 // API Error

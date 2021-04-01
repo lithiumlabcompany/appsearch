@@ -3,10 +3,12 @@ package appsearch
 import (
 	"context"
 	"net/http"
+
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 // List a schema by engineName
-func (c *client) ListSchema(ctx context.Context, engineName string) (data SchemaDefinition, err error) {
+func (c *client) ListSchema(ctx context.Context, engineName string) (data schema.Definition, err error) {
 	err = c.Call(ctx, nil, &data, http.MethodGet, "engines/%s/schema", engineName)
 
 	if data != nil {
@@ -17,8 +19,8 @@ func (c *client) ListSchema(ctx context.Context, engineName string) (data Schema
 }
 
 // Update schema definition by engineName
-func (c *client) UpdateSchema(ctx context.Context, engineName string, def SchemaDefinition) (err error) {
-	schemaDefinition := make(SchemaDefinition)
+func (c *client) UpdateSchema(ctx context.Context, engineName string, def schema.Definition) (err error) {
+	schemaDefinition := make(schema.Definition)
 	for field, fieldType := range def {
 		if field != "id" {
 			schemaDefinition[field] = fieldType
