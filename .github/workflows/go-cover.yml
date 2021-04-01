@@ -1,0 +1,16 @@
+name: Codecov
+on: [ push ]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.14'
+      - name: Run coverage
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic
+        env:
+          APPSEARCH: ${{ secrets.APPSEARCH }}
+      - uses: codecov/codecov-action@v1
