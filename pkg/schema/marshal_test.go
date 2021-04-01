@@ -58,4 +58,32 @@ func TestMarshal(t *testing.T) {
 			"boolasnumber":             1.0,
 		}, out)
 	})
+
+	t.Run("Marshal slice", func(t *testing.T) {
+		type model struct {
+			Foo string
+			Bar float64
+			Baz bool
+		}
+
+		schema := Definition{
+			"foo": "text",
+			"bar": "number",
+			"baz": "number",
+		}
+
+		input := []model{
+			{Foo: "bar", Bar: 1111111, Baz: true},
+			{Foo: "val", Bar: 999.123, Baz: false},
+		}
+
+		data, err := Marshal(input, schema)
+		require.NoError(t, err)
+
+		var results []model
+		err = Unmarshal(data, &results)
+		require.NoError(t, err)
+
+		require.EqualValues(t, input, results)
+	})
 }

@@ -2,20 +2,34 @@ package schema
 
 import (
 	"encoding/json"
+	"reflect"
 )
 
-// Normalize input structure and marshal using json.Marshal
-func Marshal(i interface{}, schema Definition) ([]byte, error) {
-	normalizedMap, err := ToMap(i, schema)
-	if err == nil {
-		return json.Marshal(normalizedMap)
+// Normalize and marshal input according to schema Definition
+func Marshal(input interface{}, schema Definition) (data []byte, err error) {
+	value := reflect.ValueOf(input)
+	if value.Kind() == reflect.Slice {
+		normalized := make([]Map, value.Len())
+
+		for i := range normalized {
+			serializable := value.Index(i).Interface()
+
+			normalized[i], err = ToMap(serializable, schema)
+		}
+
+		input = normalized
+	} else {
+		input, err = ToMap(input, schema)
 	}
-	return nil, err
+	if err == nil {
+		return json.Marshal(input)
+	}
+	return
 }
 
-// Convert JSON-serializable type to normalized map according to Definition
-func ToMap(i interface{}, schema Definition) (normalizedMap Map, err error) {
-	nestedMap, err := mapFromJSON(i)
+// Convert structure to normalized map according to schema Definition
+func ToMap(input interface{}, schema Definition) (normalizedMap Map, err error) {
+	nestedMap, err := mapFromJSON(input)
 	if err != nil {
 		return
 	}
