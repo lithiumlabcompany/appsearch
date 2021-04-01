@@ -10,18 +10,17 @@ Unofficial Experimental AppSearch API client for Go.
 
 ## Features
 
-- Marshal/Unmarshal structure to schema
+- Schema-aligned Marshal/Unmarshal of complex structures
 - Engine API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#EngineAPI)
   | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/engines.html)
 - Schema API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#SchemaAPI)
   | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/schema.html)
-- Document
-  API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#DocumentAPI)
+- Document API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#DocumentAPI)
   | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/documents.html)
 
 ## TODO
 
-- Derive schema from struct with tags
+- Deriving schemas from structure with tags
 - Implement complete set of Elastic App Search API's
 
 ## Quickstart
@@ -47,7 +46,7 @@ func main() {
 	defer cancel()
 
 	engineName := "civilizations"
-	schemaDefinition := appsearch.SchemaDefinition{
+	schemaDefinition := schema.Definition{
 		"name":        "text",
 		"rating":      "number",
 		"description": "text",
@@ -58,20 +57,22 @@ func main() {
 		Language: "en",
 	}, schemaDefinition)
 
-	document, _ := schema.ToMap(Civilization{
+	// Also supports marshaling nested structures
+	documents, _ := schema.Marshal([]Civilization{{
 		Name:        "Babylonian",
 		Rating:      5212.2,
 		Description: "Technological and scientific",
-	}, schemaDefinition)
+	}}, schemaDefinition)
 
-	client.UpdateDocuments(ctx, "civilizations", []schema.Map{document})
+	// Also accepts any normalized JSON-serializable input
+	client.UpdateDocuments(ctx, "civilizations", documents)
 
 	search, _ := client.SearchDocuments(ctx, engineName, appsearch.Query{
 		Query: "scientific",
 	})
 
 	var results []Civilization
-	_ = schema.UnmarshalResults(search.Results, &results)
+	_ = schema.UnpackSlice(search.Results, &results)
 
 	println(results[0])
 }

@@ -7,21 +7,103 @@ import (
 	"strings"
 )
 
-// UnmarshalSchema is used to implement custom unpacking
-type UnmarshalSchema interface {
-	UnmarshalSchema(normalizedMap Map) error
+// UnpackSchema is used to implement custom unpacking
+type UnpackSchema interface {
+	UnpackSchema(normalizedMap Map) error
+}
+
+// Unpack search results into a slice
+func UnpackSlice(results []Map, output interface{}) (err error) {
+	sliceType := getType(output)
+	if sliceType.Kind() == reflect.Ptr {
+		sliceType = sliceType.Elem()
+	}
+	valueType := sliceType.Elem()
+	if valueType.Kind() == reflect.Ptr {
+		valueType = valueType.Elem()
+	}
+	outputSlice := reflect.MakeSlice(sliceType, len(results), len(results))
+
+	fieldIndex, tagIndex, err := buildIndex(valueType)
+	if err != nil {
+		return
+	}
+
+	for i, result := range results {
+		newResult := reflect.New(valueType).Interface()
+
+		nestedMap := objectify(result, "_")
+		denormalizedMap, err := denormalize(nestedMap, fieldIndex, tagIndex)
+		if err == nil {
+			err = unmarshalInto(denormalizedMap, &newResult)
+		}
+		if err != nil {
+			return err
+		}
+
+		outputSlice.Index(i).Set(reflect.ValueOf(newResult).Elem())
+	}
+
+	outputValue := reflect.ValueOf(output)
+	if outputValue.Kind() == reflect.Ptr && !outputValue.IsZero() {
+		outputValue = outputValue.Elem()
+	}
+
+	outputValue.Set(outputSlice)
+	return nil
+}
+
+// Accepts normalized Map as input and tries to unpack nested map according to struct tags
+// `json:"..."` tags are used to infer original data model comparing fields via normalized schema
+// By that extent its forbidden to use underscores ("_") in tags on original data model
+func Unpack(normalizedMap Map, output interface{}) (err error) {
+	if unmarshal, ok := output.(UnpackSchema); ok {
+		return unmarshal.UnpackSchema(normalizedMap)
+	}
+
+	outputType := reflect.TypeOf(output).Elem()
+	fieldIndex, tagIndex, err := buildIndex(outputType)
+	if err != nil {
+		return err
+	}
+
+	nestedMap := objectify(normalizedMap, "_")
+	denormalizedMap, err := denormalize(nestedMap, fieldIndex, tagIndex)
+	if err == nil {
+		err = unmarshalInto(denormalizedMap, output)
+	}
+
+	return err
+}
+
+// Unmarshal raw JSON
+func Unmarshal(data []byte, output interface{}) (err error) {
+	var raw interface{}
+
+	err = json.Unmarshal(data, &raw)
+	if err != nil {
+		return
+	}
+
+	switch raw := raw.(type) {
+	case []interface{}:
+		return unpackInterfaceSlice(raw, output)
+	case map[string]interface{}:
+		return Unpack(raw, output)
+	default:
+		panic(fmt.Errorf("unmarshal %v", raw))
+	}
 }
 
 // Return normalizedMap back to original form based on type-lookups on model interface
 func Denormalize(normalizedMap Map, model interface{}) (denormalizedMap Map, err error) {
 	nestedMap := objectify(normalizedMap, "_")
 
-	modelType := getType(model)
-	if modelType.Kind() == reflect.Ptr {
-		modelType = modelType.Elem()
+	fieldIndex, tagIndex, err := buildIndex(reflect.TypeOf(model))
+	if err != nil {
+		return nil, err
 	}
 
-	fieldIndex, tagIndex := buildIndex(modelType)
 	return denormalize(nestedMap, fieldIndex, tagIndex)
 }
 
@@ -40,10 +122,13 @@ func denormalize(nestedMap Map, fieldIndex map[string]reflect.StructField, tagIn
 		if innerMap, isInnerMap := value.(Map); isInnerMap && hasInnerField {
 			// Handle deep struct
 			if innerField.Type.Kind() == reflect.Struct {
-				fieldIndex, tagIndex := buildIndex(innerField.Type)
+				fieldIndex, tagIndex, err := buildIndex(innerField.Type)
+				if err != nil {
+					return nil, err
+				}
 				denormalizedMap[jsonTag], err = denormalize(innerMap, fieldIndex, tagIndex)
 				if err != nil {
-					return
+					return nil, err
 				}
 				continue
 			}
@@ -65,69 +150,16 @@ func denormalize(nestedMap Map, fieldIndex map[string]reflect.StructField, tagIn
 	return
 }
 
-// Unmarshal search results into a slice
-func UnmarshalResults(results []Map, output interface{}) (err error) {
-	sliceType := getType(output)
-	if sliceType.Kind() == reflect.Ptr {
-		sliceType = sliceType.Elem()
-	}
-	valueType := sliceType.Elem()
-	if valueType.Kind() == reflect.Ptr {
-		valueType = valueType.Elem()
-	}
-	outputSlice := reflect.MakeSlice(sliceType, len(results), len(results))
-
-	fieldIndex, tagIndex := buildIndex(valueType)
-
-	for i, result := range results {
-		newResult := reflect.New(valueType).Interface()
-
-		nestedMap := objectify(result, "_")
-		denormalizedMap, err := denormalize(nestedMap, fieldIndex, tagIndex)
-		if err == nil {
-			err = unmarshalInto(denormalizedMap, &newResult)
+func unpackInterfaceSlice(raw []interface{}, output interface{}) error {
+	mapSlice := make([]Map, len(raw))
+	var sanity bool
+	for i, raw := range raw {
+		mapSlice[i], sanity = raw.(Map)
+		if !sanity {
+			return fmt.Errorf("cannot unmarshal slice of %T to %T", raw, output)
 		}
-		if err != nil {
-			return err
-		}
-
-		if valueType.Kind() != reflect.Ptr {
-			newResult = reflect.ValueOf(newResult).Elem().Interface()
-		}
-		outputSlice.Index(i).Set(reflect.ValueOf(newResult))
 	}
-
-	outputValue := reflect.ValueOf(output)
-	if outputValue.Kind() == reflect.Ptr && !outputValue.IsZero() {
-		outputValue = outputValue.Elem()
-	}
-
-	outputValue.Set(outputSlice)
-	return nil
-}
-
-// Accepts normalized Map as input and tries to unpack nested map according to struct tags
-// `json:"..."` tags are used to infer original data model comparing fields via normalized schema
-// By that extent its forbidden to use underscores ("_") in tags on original data model
-func Unmarshal(normalizedMap Map, output interface{}) (err error) {
-	if unmarshal, ok := output.(UnmarshalSchema); ok {
-		return unmarshal.UnmarshalSchema(normalizedMap)
-	}
-
-	denormalizedMap, err := Denormalize(normalizedMap, output)
-	if err == nil {
-		err = unmarshalInto(denormalizedMap, output)
-	}
-
-	return err
-}
-
-func buildIndex(modelType reflect.Type) (fieldIndex map[string]reflect.StructField, tagIndex map[string]string) {
-	jsonTagToField := mapFieldsByJSONTag(modelType)
-	normalizedKeyToField := mapNormalizedFields(jsonTagToField)
-	normalizedFieldToJSONTag := mapNormalizedToJSON(normalizedKeyToField)
-
-	return normalizedKeyToField, normalizedFieldToJSONTag
+	return UnpackSlice(mapSlice, output)
 }
 
 func mapNormalizedToJSON(byNormalized map[string]reflect.StructField) map[string]string {
@@ -158,6 +190,16 @@ func mapFieldsByJSONTag(t reflect.Type) map[string]reflect.StructField {
 	return index
 }
 
+func mapNormalizedFields(mapByField map[string]reflect.StructField) map[string]reflect.StructField {
+	normalizedIndex := make(map[string]reflect.StructField)
+
+	for k, v := range mapByField {
+		normalizedIndex[NormalizeField(k)] = v
+	}
+
+	return normalizedIndex
+}
+
 func getJSONTagOrFieldName(field reflect.StructField) string {
 	// Get the field tag value as described in `json:"..."` tag
 	tag := field.Tag.Get("json")
@@ -171,14 +213,23 @@ func getJSONTagOrFieldName(field reflect.StructField) string {
 	return jsonField
 }
 
-func mapNormalizedFields(mapByField map[string]reflect.StructField) map[string]reflect.StructField {
-	normalizedIndex := make(map[string]reflect.StructField)
-
-	for k, v := range mapByField {
-		normalizedIndex[NormalizeField(k)] = v
+func buildIndex(modelType reflect.Type) (fieldIndex map[string]reflect.StructField, tagIndex map[string]string, err error) {
+	if modelType.Kind() == reflect.Ptr {
+		modelType = modelType.Elem()
 	}
 
-	return normalizedIndex
+	switch modelType.Kind() {
+	case reflect.Slice:
+		return nil, nil, ErrCannotUnpackSlice
+	case reflect.Map:
+		return nil, nil, ErrCannotInferFromMap
+	}
+
+	jsonTagToField := mapFieldsByJSONTag(modelType)
+	normalizedKeyToField := mapNormalizedFields(jsonTagToField)
+	normalizedFieldToJSONTag := mapNormalizedToJSON(normalizedKeyToField)
+
+	return normalizedKeyToField, normalizedFieldToJSONTag, err
 }
 
 func decodeBool(value interface{}) bool {

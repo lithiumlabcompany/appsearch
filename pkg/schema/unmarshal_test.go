@@ -28,7 +28,7 @@ func TestUnmarshal(t *testing.T) {
 		}, denormalized)
 	})
 
-	t.Run("Unmarshal", func(t *testing.T) {
+	t.Run("Unpack", func(t *testing.T) {
 		normalizedMap := Map{
 			"foo":     "1",
 			"bar_baz": "2",
@@ -40,7 +40,7 @@ func TestUnmarshal(t *testing.T) {
 			} `json:"Bar"`
 		}
 		var output model
-		err := Unmarshal(normalizedMap, &output)
+		err := Unpack(normalizedMap, &output)
 		require.NoError(t, err)
 		require.EqualValues(t, model{
 			Foo: "1",
@@ -52,7 +52,7 @@ func TestUnmarshal(t *testing.T) {
 		}, output)
 	})
 
-	t.Run("UnmarshalResults", func(t *testing.T) {
+	t.Run("UnpackResults", func(t *testing.T) {
 		type model struct {
 			Foo string `json:"__foo"`
 			Bar struct {
@@ -127,27 +127,45 @@ func TestUnmarshal(t *testing.T) {
 		}
 		t.Run("As []model", func(t *testing.T) {
 			var output []model
-			err := UnmarshalResults(results, &output)
+			err := UnpackSlice(results, &output)
 			require.NoError(t, err)
 			require.EqualValues(t, expected, output)
 		})
 		// t.Run("As *[]model", func(t *testing.T) {
 		// 	var output *[]model
-		// 	err := UnmarshalResults(results, &output)
+		// 	err := UnpackResults(results, &output)
 		// 	require.NoError(t, err)
 		// 	require.EqualValues(t, expected, output)
 		// })
 		// t.Run("As []*model", func(t *testing.T) {
 		// 	var output []*model
-		// 	err := UnmarshalResults(results, &output)
+		// 	err := UnpackResults(results, &output)
 		// 	require.NoError(t, err)
 		// 	require.EqualValues(t, expected, output)
 		// })
 		// t.Run("As *[]*model", func(t *testing.T) {
 		// 	var output *[]*model
-		// 	err := UnmarshalResults(results, &output)
+		// 	err := UnpackResults(results, &output)
 		// 	require.NoError(t, err)
 		// require.EqualValues(t, expected, output)
 		// })
+	})
+
+	t.Run("Unmarshal", func(t *testing.T) {
+		type model struct {
+			Hello string
+		}
+		t.Run("JSON object", func(t *testing.T) {
+			var result model
+			err := Unmarshal([]byte(`{"hello": "world"}`), &result)
+			require.NoError(t, err)
+			require.EqualValues(t, model{"world"}, result)
+		})
+		t.Run("JSON array", func(t *testing.T) {
+			var result []model
+			err := Unmarshal([]byte(`[{"hello": "world"}]`), &result)
+			require.NoError(t, err)
+			require.EqualValues(t, []model{{"world"}}, result)
+		})
 	})
 }
