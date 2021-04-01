@@ -18,6 +18,8 @@ func TestMarshal(t *testing.T) {
 			IncludedBasedOnFieldName string
 			IgnoredJSON              string `json:"-"`
 			IgnoredNotInSchema       string `json:"notInSchema"`
+			BoolAsText               bool   `json:"boolAsText"`
+			BoolAsNumber             bool   `json:"boolAsNumber"`
 		}
 
 		schema := Definition{
@@ -25,6 +27,8 @@ func TestMarshal(t *testing.T) {
 			"baz_doo":                  "number",
 			"ignoredjson":              "text",
 			"includedbasedonfieldname": "text",
+			"boolastext":               "text",
+			"boolasnumber":             "number",
 		}
 
 		item := nestedStruct{
@@ -32,9 +36,11 @@ func TestMarshal(t *testing.T) {
 			Baz: struct {
 				Doo float64 `json:"_doo_"`
 			}{Doo: 123.0},
+			IncludedBasedOnFieldName: "a value",
 			IgnoredJSON:              "ignored",
 			IgnoredNotInSchema:       "ignored",
-			IncludedBasedOnFieldName: "a value",
+			BoolAsText:               true,
+			BoolAsNumber:             true,
 		}
 
 		b, err := Marshal(item, schema)
@@ -48,6 +54,8 @@ func TestMarshal(t *testing.T) {
 			"baz_doo":                  123.0,
 			"foobar":                   "hello world",
 			"includedbasedonfieldname": "a value",
+			"boolastext":               "true",
+			"boolasnumber":             1.0,
 		}, out)
 	})
 }

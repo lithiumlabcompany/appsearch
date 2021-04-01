@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -13,42 +14,51 @@ type UnmarshalSchema interface {
 
 // Return normalizedMap back to original form based on type-lookups on model interface
 func Denormalize(normalizedMap Map, model interface{}) (denormalizedMap Map, err error) {
-	normalizedNestedMap := objectify(normalizedMap, "_")
+	nestedMap := objectify(normalizedMap, "_")
+
+	modelType := getType(model)
+	if modelType.Kind() == reflect.Ptr {
+		modelType = modelType.Elem()
+	}
+
+	fieldIndex, tagIndex := buildIndex(modelType)
+	return denormalize(nestedMap, fieldIndex, tagIndex)
+}
+
+func denormalize(nestedMap Map, fieldIndex map[string]reflect.StructField, tagIndex map[string]string) (denormalizedMap Map, err error) {
 	denormalizedMap = make(Map)
 
-	t := getType(model)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	jsonTagToField := mapFieldsByJSONTag(t)
-	normalizedKeyToField := mapNormalizedFields(jsonTagToField)
-	normalizedFieldToJSONTag := mapNormalizedToJSON(normalizedKeyToField)
-
-	for normalizedField, value := range normalizedNestedMap {
-		innerField, hasInnerField := normalizedKeyToField[normalizedField]
-		jsonTag := normalizedFieldToJSONTag[normalizedField]
+	for field, value := range nestedMap {
+		innerField, hasInnerField := fieldIndex[field]
+		jsonTag := tagIndex[field]
 
 		// Store values as-is if we can't derive original key
 		if jsonTag == "" {
-			jsonTag = normalizedField
+			jsonTag = field
 		}
 
 		if innerMap, isInnerMap := value.(Map); isInnerMap && hasInnerField {
 			// Handle deep struct
 			if innerField.Type.Kind() == reflect.Struct {
-				denormalizedMap[jsonTag], err = Denormalize(innerMap, innerField.Type)
+				fieldIndex, tagIndex := buildIndex(innerField.Type)
+				denormalizedMap[jsonTag], err = denormalize(innerMap, fieldIndex, tagIndex)
 				if err != nil {
 					return
 				}
-			} else {
-				// Handle unpacking of { raw } values
-				rawValue, ok := innerMap["raw"]
-				if !ok {
-					panic(ErrRawValue)
-				}
-				denormalizedMap[jsonTag] = rawValue
+				continue
 			}
-		} else {
+			// Handle unpacking of { raw } values
+			rawValue, ok := innerMap["raw"]
+			if !ok {
+				panic(ErrRawValue)
+			}
+			value = rawValue
+		}
+
+		switch innerField.Type.Kind() {
+		case reflect.Bool:
+			denormalizedMap[jsonTag] = decodeBool(value)
+		default:
 			denormalizedMap[jsonTag] = value
 		}
 	}
@@ -68,10 +78,13 @@ func UnmarshalResults(results []Map, output interface{}) (err error) {
 	}
 	outputSlice := reflect.MakeSlice(sliceType, len(results), len(results))
 
+	fieldIndex, tagIndex := buildIndex(valueType)
+
 	for i, result := range results {
 		newResult := reflect.New(valueType).Interface()
 
-		denormalizedMap, err := Denormalize(result, valueType)
+		nestedMap := objectify(result, "_")
+		denormalizedMap, err := denormalize(nestedMap, fieldIndex, tagIndex)
 		if err == nil {
 			err = unmarshalInto(denormalizedMap, &newResult)
 		}
@@ -108,6 +121,14 @@ func Unmarshal(normalizedMap Map, output interface{}) (err error) {
 	}
 
 	return err
+}
+
+func buildIndex(modelType reflect.Type) (fieldIndex map[string]reflect.StructField, tagIndex map[string]string) {
+	jsonTagToField := mapFieldsByJSONTag(modelType)
+	normalizedKeyToField := mapNormalizedFields(jsonTagToField)
+	normalizedFieldToJSONTag := mapNormalizedToJSON(normalizedKeyToField)
+
+	return normalizedKeyToField, normalizedFieldToJSONTag
 }
 
 func mapNormalizedToJSON(byNormalized map[string]reflect.StructField) map[string]string {
@@ -159,6 +180,58 @@ func mapNormalizedFields(mapByField map[string]reflect.StructField) map[string]r
 	}
 
 	return normalizedIndex
+}
+
+func decodeBool(value interface{}) bool {
+	switch value := value.(type) {
+	case string:
+		switch value {
+		case "true":
+			return true
+		case "false":
+			return false
+		default:
+			panic(errCannotDecodeValueToBool(value))
+		}
+	case int:
+		return decodeIntAsBool(value)
+	case int32:
+		return decodeIntAsBool(int(value))
+	case int64:
+		return decodeIntAsBool(int(value))
+	case float32:
+		return decodeFloatAsBool(value)
+	case float64:
+		return decodeFloatAsBool(float32(value))
+	default:
+		panic(errCannotDecodeValueToBool(value))
+	}
+}
+
+func decodeFloatAsBool(value float32) bool {
+	switch value {
+	case 1:
+		return true
+	case 0:
+		return false
+	default:
+		panic(errCannotDecodeValueToBool(value))
+	}
+}
+
+func decodeIntAsBool(value int) bool {
+	switch value {
+	case 1:
+		return true
+	case 0:
+		return false
+	default:
+		panic(errCannotDecodeValueToBool(value))
+	}
+}
+
+func errCannotDecodeValueToBool(value interface{}) error {
+	return fmt.Errorf("cannot decode %v to bool", value)
 }
 
 func getType(model interface{}) (t reflect.Type) {

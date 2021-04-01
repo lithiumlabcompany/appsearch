@@ -58,15 +58,21 @@ func TestUnmarshal(t *testing.T) {
 			Bar struct {
 				Baz string `json:"__stUff__"`
 			} `json:"dEEp_"`
+			BoolAsText   bool `json:"boolAsText"`
+			BoolAsNumber bool `json:"boolAsNumber"`
 		}
 		results := []Map{
 			{
-				"foo":        "1",
-				"deep_stuff": "2",
+				"foo":          "1",
+				"deep_stuff":   "2",
+				"boolastext":   "true",
+				"boolasnumber": 1,
 			},
 			{
-				"foo":        "3",
-				"deep_stuff": "4",
+				"foo":          "3",
+				"deep_stuff":   "4",
+				"boolastext":   "true",
+				"boolasnumber": 1,
 			},
 			{
 				"deep_stuff": Map{
@@ -74,6 +80,12 @@ func TestUnmarshal(t *testing.T) {
 				},
 				"foo": Map{
 					"raw": "value",
+				},
+				"boolastext": Map{
+					"raw": "true",
+				},
+				"boolasnumber": Map{
+					"raw": 1,
 				},
 			},
 		}
@@ -85,6 +97,8 @@ func TestUnmarshal(t *testing.T) {
 				}{
 					Baz: "2",
 				},
+				BoolAsText:   true,
+				BoolAsNumber: true,
 			},
 			{
 				Foo: "3",
@@ -93,6 +107,8 @@ func TestUnmarshal(t *testing.T) {
 				}{
 					Baz: "4",
 				},
+				BoolAsText:   true,
+				BoolAsNumber: true,
 			},
 			{
 				Foo: "value",
@@ -101,6 +117,8 @@ func TestUnmarshal(t *testing.T) {
 				}{
 					Baz: "value",
 				},
+				BoolAsText:   true,
+				BoolAsNumber: true,
 			},
 		}
 		t.Run("As []model", func(t *testing.T) {
