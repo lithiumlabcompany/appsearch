@@ -8,6 +8,22 @@ Unofficial Experimental AppSearch API client for Go.
 [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch)
 | [Elastic AppSearch API](https://www.elastic.co/guide/en/app-search/current/api-reference.html)
 
+## Features
+
+- Marshal/Unmarshal structure to schema
+- Engine API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#EngineAPI)
+  | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/engines.html)
+- Schema API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#SchemaAPI)
+  | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/schema.html)
+- Document
+  API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#DocumentAPI)
+  | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/documents.html)
+
+## TODO
+
+- Derive schema from struct with tags
+- Implement complete set of Elastic App Search API's
+
 ## Quickstart
 
 ```go
@@ -62,15 +78,3 @@ func main() {
 	*/
 }
 ```
-
-## Implemented API's
-
-- Engine API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#EngineAPI)
-  | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/engines.html)
-
-- Schema API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#SchemaAPI)
-  | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/schema.html)
-
-- Document
-  API [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch#DocumentAPI)
-  | [ElasticSearch Reference](https://www.elastic.co/guide/en/app-search/current/documents.html)
