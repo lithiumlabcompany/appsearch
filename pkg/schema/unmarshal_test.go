@@ -67,12 +67,15 @@ func TestUnmarshal(t *testing.T) {
 				"deep_stuff":   "2",
 				"boolastext":   "true",
 				"boolasnumber": 1,
+				"nonexistent":  "hello",
+				"_meta":        Map{},
 			},
 			{
 				"foo":          "3",
 				"deep_stuff":   "4",
 				"boolastext":   "true",
 				"boolasnumber": 1,
+				"nonexistent":  "hello",
 			},
 			{
 				"deep_stuff": Map{
@@ -87,6 +90,7 @@ func TestUnmarshal(t *testing.T) {
 				"boolasnumber": Map{
 					"raw": 1,
 				},
+				"nonexistent": "hello",
 			},
 		}
 		expected := []model{
