@@ -55,12 +55,11 @@ func denormalize(nestedMap Map, fieldIndex map[string]reflect.StructField, tagIn
 			value = rawValue
 		}
 
-		switch innerField.Type.Kind() {
-		case reflect.Bool:
-			denormalizedMap[jsonTag] = decodeBool(value)
-		default:
-			denormalizedMap[jsonTag] = value
+		if hasInnerField && innerField.Type.Kind() == reflect.Bool {
+			value = decodeBool(value)
 		}
+
+		denormalizedMap[jsonTag] = value
 	}
 
 	return
