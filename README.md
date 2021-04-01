@@ -1,6 +1,8 @@
 appsearch
 =========
 
+[![Codecov](https://github.com/lithiumlabcompany/appsearch/actions/workflows/go-cover.yml/badge.svg)](https://github.com/lithiumlabcompany/appsearch/actions/workflows/go-cover.yml)
+
 Unofficial Experimental AppSearch API client for Go.
 
 [Godoc](https://pkg.go.dev/github.com/lithiumlabcompany/appsearch)
