@@ -32,6 +32,7 @@ package main
 import (
 	"context"
 	"github.com/lithiumlabcompany/appsearch"
+	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
 func main() {
@@ -55,26 +56,15 @@ func main() {
 		Query: "science",
 	})
 
-	println(search.Results[0])
+	type Civilization struct {
+		Name        string
+		Rating      float32
+		Description string
+	}
 
-	/*
-		{
-		  "_meta": {
-		    "score": 1396363.1
-		  },
-		  "name": {
-		    "raw": "Babylonian"
-		  },
-		  "description": {
-		    "raw": "Technological and scientific"
-		  },
-		  "rating": {
-		    "raw": 5212.2
-		  },
-		  "id": {
-		    "raw": "park_everglades"
-		  }
-		}
-	*/
+	var results []Civilization
+	schema.UnmarshalResults(search.Results, &results)
+
+	println(results[0])
 }
 ```
