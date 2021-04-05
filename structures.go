@@ -109,6 +109,25 @@ type Facet struct {
 // SearchFacets Search facets
 type SearchFacets = map[string][]Facet
 
+// Describe single facet data in FacetResult
+type FacetData struct {
+	Value string `json:"value"`
+	Count int    `json:"count"`
+	// Can be date string, or number
+	From interface{} `json:"from"`
+	To   interface{} `json:"to"`
+}
+
+// Describe single facet result in FacetResultMap
+type FacetResult struct {
+	Type FacetType   `json:"type"`
+	Name string      `json:"name"`
+	Data []FacetData `json:"data"`
+}
+
+// Structure to describe facets in response
+type FacetResultMap = map[string][]FacetResult
+
 // BoostType Boost type
 type BoostType = string
 
@@ -219,8 +238,9 @@ type Query struct {
 
 // Document Search API response
 type SearchResponse struct {
-	Meta    ResponseMeta `json:"meta"`
-	Results []schema.Map `json:"results"`
+	Meta    ResponseMeta   `json:"meta"`
+	Facets  FacetResultMap `json:"facets"`
+	Results []schema.Map   `json:"results"`
 }
 
 // API Error
