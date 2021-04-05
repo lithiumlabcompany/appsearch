@@ -2,8 +2,10 @@ package appsearch
 
 import (
 	"context"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -89,9 +91,52 @@ func TestDocumentAPI(t *testing.T) {
 			{ID: "national-parks", Errors: []string{}},
 		}, res)
 
+		time.Sleep(time.Second)
+
 		response, err := c.SearchDocuments(ctx, engine.Name, Query{Query: "amazing"})
 		require.NoError(t, err)
 
 		require.Len(t, response.Results, 1)
+	})
+
+	t.Run("Must decode search facets", func(t *testing.T) {
+		t.Parallel()
+
+		engine := createRandomEngine(c)
+		defer deleteEngine(c, engine)
+
+		_, err := c.UpdateDocuments(ctx, engine.Name, []m{
+			{"state": "Illinois", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Illinois", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Missouri", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Missouri", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Kansas", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Arkansas", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Utah", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Utah", "obscurerandomnumber": rand.Intn(12345)},
+			{"state": "Utah", "obscurerandomnumber": rand.Intn(12345)},
+		})
+		require.NoError(t, err)
+
+		time.Sleep(time.Second)
+
+		query := Query{Query: "", Facets: SearchFacets{
+			"state": []Facet{{
+				Type: "value",
+				Name: "top_five_states",
+				Sort: Sorting{"count": "desc"},
+				Size: 5,
+			}},
+		}}
+		response, err := c.SearchDocuments(ctx, engine.Name, query)
+		require.NoError(t, err)
+
+		require.Len(t, response.Facets["state"], 1)
+		require.Len(t, response.Facets["state"][0].Data, 5)
+
+		for _, facet := range response.Facets["state"][0].Data {
+			require.NotEmpty(t, facet.Value)
+			require.NotEmpty(t, facet.Count)
+		}
 	})
 }

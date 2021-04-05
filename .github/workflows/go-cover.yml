@@ -10,7 +10,7 @@ jobs:
         with:
           go-version: '1.14'
       - name: Run coverage
-        run: go test -race -coverprofile=coverage.txt -covermode=atomic
+        run: go test ./... -race -coverprofile=coverage.txt -covermode=atomic
         env:
           APPSEARCH: ${{ secrets.APPSEARCH }}
       - uses: codecov/codecov-action@v1
