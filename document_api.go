@@ -33,9 +33,15 @@ func (c *client) RemoveDocuments(ctx context.Context, engineName string, documen
 	return res, err
 }
 
+// List documents
+func (c *client) ListDocuments(ctx context.Context, engineName string, page Page) (response DocumentResponse, err error) {
+	err = c.Call(ctx, m{"page": page}, &response, http.MethodGet, "engines/%s/documents/list", engineName)
+
+	return response, err
+}
+
 // Search documents by query
-// Refer to https://www.elastic.co/guide/en/app-search/current/search.html#search-api-request-body
-func (c *client) SearchDocuments(ctx context.Context, engineName string, query Query) (response SearchResponse, err error) {
+func (c *client) SearchDocuments(ctx context.Context, engineName string, query Query) (response DocumentResponse, err error) {
 	err = c.Call(ctx, query, &response, http.MethodPost, "engines/%s/search", engineName)
 
 	return response, err

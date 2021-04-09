@@ -7,6 +7,8 @@ import (
 	"github.com/lithiumlabcompany/appsearch/pkg/schema"
 )
 
+type m = map[string]interface{}
+
 // Page options
 type Page struct {
 	Page int `json:"current,omitempty"`
@@ -237,7 +239,7 @@ type Query struct {
 }
 
 // Document Search API response
-type SearchResponse struct {
+type DocumentResponse struct {
 	Meta    ResponseMeta   `json:"meta"`
 	Facets  FacetResultMap `json:"facets"`
 	Results []schema.Map   `json:"results"`

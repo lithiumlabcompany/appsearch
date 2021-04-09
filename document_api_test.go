@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type m = map[string]interface{}
-
 func TestDocumentAPI(t *testing.T) {
 	t.Parallel()
 	ctx := context.TODO()
@@ -94,6 +92,27 @@ func TestDocumentAPI(t *testing.T) {
 		time.Sleep(time.Second)
 
 		response, err := c.SearchDocuments(ctx, engine.Name, Query{Query: "amazing"})
+		require.NoError(t, err)
+
+		require.Len(t, response.Results, 1)
+	})
+
+	t.Run("Must list documents", func(t *testing.T) {
+		t.Parallel()
+		engine := createRandomEngine(c)
+		defer deleteEngine(c, engine)
+
+		res, err := c.UpdateDocuments(ctx, engine.Name, []m{
+			{"id": "national-parks", "title": "Amazing title"},
+		})
+		require.NoError(t, err)
+		require.EqualValues(t, []UpdateResponse{
+			{ID: "national-parks", Errors: []string{}},
+		}, res)
+
+		time.Sleep(time.Second)
+
+		response, err := c.ListDocuments(ctx, engine.Name, Page{1, 1})
 		require.NoError(t, err)
 
 		require.Len(t, response.Results, 1)
