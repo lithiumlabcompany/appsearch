@@ -21,8 +21,10 @@ type DocumentAPI interface {
 	// Remove a list of documents specified as []string of ID's or []interface{} of documents with "id" field
 	// Every document is processed separately.
 	RemoveDocuments(ctx context.Context, engineName string, documentsOrIDs interface{}) (res []DeleteResponse, err error)
+	// List documents
+	ListDocuments(ctx context.Context, engineName string, page Page) (response DocumentResponse, err error)
 	// Search documents by query
-	SearchDocuments(ctx context.Context, engineName string, query Query) (response SearchResponse, err error)
+	SearchDocuments(ctx context.Context, engineName string, query Query) (response DocumentResponse, err error)
 }
 
 // EngineAPI engine api
