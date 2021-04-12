@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -140,14 +141,124 @@ func denormalize(nestedMap Map, fieldIndex map[string]reflect.StructField, tagIn
 			value = rawValue
 		}
 
-		if hasInnerField && innerField.Type.Kind() == reflect.Bool {
-			value = decodeBool(value)
+		if hasInnerField {
+			valueType := reflect.ValueOf(value).Type()
+			value, err = decodeValue(value, valueType, innerField.Type)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		denormalizedMap[jsonTag] = value
 	}
 
 	return
+}
+
+func decodeValue(value interface{}, valueType, fieldType reflect.Type) (interface{}, error) {
+	switch {
+	case fieldType.Kind() == reflect.Bool:
+		return decodeBool(value)
+	case valueType.Kind() == reflect.String && isNumber(fieldType.Kind()):
+		return decodeNumber(value.(string), fieldType.Kind())
+	default:
+		return value, nil
+	}
+}
+
+var kindInt = map[reflect.Kind]struct{}{
+	reflect.Int:    {},
+	reflect.Int8:   {},
+	reflect.Int16:  {},
+	reflect.Int32:  {},
+	reflect.Int64:  {},
+	reflect.Uint:   {},
+	reflect.Uint8:  {},
+	reflect.Uint16: {},
+	reflect.Uint32: {},
+	reflect.Uint64: {},
+}
+var kindFloat = map[reflect.Kind]struct{}{
+	reflect.Float32: {},
+	reflect.Float64: {},
+}
+
+var kindNumber = map[reflect.Kind]struct{}{
+	reflect.Int:     {},
+	reflect.Int8:    {},
+	reflect.Int16:   {},
+	reflect.Int32:   {},
+	reflect.Int64:   {},
+	reflect.Uint:    {},
+	reflect.Uint8:   {},
+	reflect.Uint16:  {},
+	reflect.Uint32:  {},
+	reflect.Uint64:  {},
+	reflect.Float32: {},
+	reflect.Float64: {},
+}
+
+func isNumber(kind reflect.Kind) bool {
+	_, k := kindNumber[kind]
+	return k
+}
+
+func decodeNumber(s string, kind reflect.Kind) (interface{}, error) {
+	if _, isInt := kindInt[kind]; isInt {
+		i, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		return intType(i, kind), nil
+	}
+
+	if _, isFloat := kindFloat[kind]; isFloat {
+		f, err := strconv.ParseFloat(s, 10)
+		if err != nil {
+			return nil, err
+		}
+		return floatType(f, kind), nil
+	}
+
+	return nil, errCannotDecodeValue(s, kind)
+}
+
+func intType(i int64, kind reflect.Kind) interface{} {
+	switch kind {
+	default:
+		return i
+	case reflect.Int:
+		return int(i)
+	case reflect.Int8:
+		return int8(i)
+	case reflect.Int16:
+		return int16(i)
+	case reflect.Int32:
+		return int32(i)
+	case reflect.Int64:
+		return int64(i)
+	case reflect.Uint:
+		return uint(i)
+	case reflect.Uint8:
+		return uint8(i)
+	case reflect.Uint16:
+		return uint16(i)
+	case reflect.Uint32:
+		return uint32(i)
+	case reflect.Uint64:
+		return uint64(i)
+	}
+}
+
+func floatType(f float64, kind reflect.Kind) interface{} {
+	switch kind {
+	default:
+		return f
+	case reflect.Float32:
+		return float32(f)
+	case reflect.Float64:
+		return f
+	}
 }
 
 func unpackInterfaceSlice(raw []interface{}, output interface{}) error {
@@ -232,20 +343,20 @@ func buildIndex(modelType reflect.Type) (fieldIndex map[string]reflect.StructFie
 	return normalizedKeyToField, normalizedFieldToJSONTag, err
 }
 
-func decodeBool(value interface{}) bool {
+func decodeBool(value interface{}) (bool, error) {
 	switch value := value.(type) {
 	case string:
 		switch value {
 		case "1":
-			return true
+			return true, nil
 		case "0":
-			return false
+			return false, nil
 		case "true":
-			return true
+			return true, nil
 		case "false":
-			return false
+			return false, nil
 		default:
-			panic(errCannotDecodeValueToBool(value))
+			return false, errCannotDecodeValue(value, 0)
 		}
 	case int:
 		return decodeIntAsBool(value)
@@ -258,34 +369,34 @@ func decodeBool(value interface{}) bool {
 	case float64:
 		return decodeFloatAsBool(float32(value))
 	default:
-		panic(errCannotDecodeValueToBool(value))
+		return false, errCannotDecodeValue(value, 0)
 	}
 }
 
-func decodeFloatAsBool(value float32) bool {
+func decodeFloatAsBool(value float32) (bool, error) {
 	switch value {
 	case 1:
-		return true
+		return true, nil
 	case 0:
-		return false
+		return false, nil
 	default:
-		panic(errCannotDecodeValueToBool(value))
+		return false, errCannotDecodeValue(value, 0)
 	}
 }
 
-func decodeIntAsBool(value int) bool {
+func decodeIntAsBool(value int) (bool, error) {
 	switch value {
 	case 1:
-		return true
+		return true, nil
 	case 0:
-		return false
+		return false, nil
 	default:
-		panic(errCannotDecodeValueToBool(value))
+		return false, errCannotDecodeValue(value, 0)
 	}
 }
 
-func errCannotDecodeValueToBool(value interface{}) error {
-	return fmt.Errorf("cannot decode %v to bool", value)
+func errCannotDecodeValue(value interface{}, kind reflect.Kind) error {
+	return fmt.Errorf("cannot decode %v to %v", value, kind)
 }
 
 func getType(model interface{}) (t reflect.Type) {

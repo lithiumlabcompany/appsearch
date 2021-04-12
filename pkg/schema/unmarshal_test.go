@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -166,6 +167,18 @@ func TestUnmarshal(t *testing.T) {
 			err := Unmarshal([]byte(`[{"hello": "world"}]`), &result)
 			require.NoError(t, err)
 			require.EqualValues(t, []model{{"world"}}, result)
+		})
+		t.Run("denormalize", func(t *testing.T) {
+			t.Run("decodeValue", func(t *testing.T) {
+				t.Run("decodeNumber", func(t *testing.T) {
+					t.Run("float64", func(t *testing.T) {
+						v := "1.123"
+						n, err := decodeNumber(v, reflect.Float64)
+						require.NoError(t, err)
+						require.EqualValues(t, n, float64(1.123))
+					})
+				})
+			})
 		})
 	})
 }
