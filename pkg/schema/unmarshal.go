@@ -236,6 +236,10 @@ func decodeBool(value interface{}) bool {
 	switch value := value.(type) {
 	case string:
 		switch value {
+		case "1":
+			return true
+		case "0":
+			return false
 		case "true":
 			return true
 		case "false":
